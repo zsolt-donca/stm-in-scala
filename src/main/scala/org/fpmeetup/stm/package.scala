@@ -24,10 +24,12 @@ package object stm {
   case object CallEnded extends CallOp
   case object PostProcessingEnded extends CallOp
 
+  type CallErrorOr[T] = Either[CallError, T]
+
   object CallModel {
     def init: CallState = InScript
 
-    def fun: (CallState, CallOp) => Either[Any, CallState] = {
+    def fun: (CallState, CallOp) => CallErrorOr[CallState] = {
       case (InScript, Enqueue(queueId)) => Right(InQueue(queueId))
       case (InQueue(_), Dequeue)        => Right(InScript)
 
@@ -39,7 +41,7 @@ package object stm {
       case (Processing(agentId), CallEnded)         => Right(PostProcessing(agentId))
       case (PostProcessing(_), PostProcessingEnded) => Right(Ended)
 
-      case (state, op) => Left(InvalidCallModelTransition(state, op))
+      case (state, op) => Left(InvalidCallTransition(state, op))
     }
 
     /*
@@ -49,5 +51,6 @@ package object stm {
      */
   }
 
-  case class InvalidCallModelTransition(state: CallState, op: CallOp)
+  sealed trait CallError
+  case class InvalidCallTransition(state: CallState, op: CallOp) extends CallError
 }

@@ -19,7 +19,7 @@ class CallModelTest extends WordSpec {
     for (op <- Seq(Dequeue, Accept, Reject, CallEnded, PostProcessingEnded)) {
       s"doing $op" should {
         "result in an error" in {
-          assert(CallModel.fun(InScript, op) == Left(InvalidCallModelTransition(InScript, op)))
+          assert(CallModel.fun(InScript, op) == Left(InvalidCallTransition(InScript, op)))
         }
       }
     }

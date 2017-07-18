@@ -7,11 +7,11 @@ import org.scalatest.FunSuite
 
 class CallScenariosTest extends FunSuite {
   test("Call in script goes to agent") {
-    runRightScenario(
-      TargetAgent("a1") -> Presenting("a1"),
-      Accept -> Processing("a1"),
-      CallEnded -> PostProcessing("a1"),
-      PostProcessingEnded -> Ended
+    runScenario(
+      TargetAgent("a1")   -> Right(Presenting("a1")),
+      Accept              -> Right(Processing("a1")),
+      CallEnded           -> Right(PostProcessing("a1")),
+      PostProcessingEnded -> Right(Ended)
     )
   }
 
@@ -38,33 +38,29 @@ class CallScenariosTest extends FunSuite {
     runScenario(
       Enqueue("q1") -> Right(InQueue("q1")),
       TargetAgent("a1") -> Right(Presenting("a1")),
-      CallEnded -> Left(InvalidCallModelTransition(Presenting("a1"), CallEnded))
+      CallEnded -> Left(InvalidCallTransition(Presenting("a1"), CallEnded))
     )
   }
 
+  test("An agent cannot reject after accepting a call") {
+    runScenario(
+        Enqueue("q1")     -> Right(InQueue("q1")),
+        TargetAgent("a1") -> Right(Presenting("a1")),
+        Accept            -> Right(Processing("a1")),
+        Reject            -> Left(InvalidCallTransition(Processing("a1"), Reject))
+      )
+  }
+
   private def runRightScenario(opsAndStates: (CallOp, CallState)*): Unit = {
-    val opsAndRightStates = opsAndStates.map({ case (op, state) => (op, state.asRight[Any]) })
+    val opsAndRightStates = opsAndStates.map({ case (op, state) => (op, state.asRight[CallError]) })
     runScenario(opsAndRightStates: _*)
   }
 
-  test("An agent cannot reject after accepting a call") {
-    assertThrows[RuntimeException] {
-      runScenario( // @formatter:off
-        Enqueue("q1")     -> InQueue("q1"),
-        TargetAgent("a1") -> Presenting("a1"),
-        Accept            -> Processing("a1"),
-        Reject            -> Ended // this result won't actually be here
-      ) // @formatter:off
+  private def runScenario(opsAndErrorOrStates: (CallOp, CallErrorOr[CallState])*) {
+    val (ops, callErrorOrStates) = opsAndErrorOrStates.unzip
 
-      // but where does it throw? does it really throw at the last step?
-    }
-  }
-
-  private def runScenario(opsAndErrorOrStates: (CallOp, Either[Any, CallState])*) {
-    val (ops, errorOrStates) = opsAndErrorOrStates.unzip
-
-    // type inference issues with `Right(CallModel.init)`
-    val actualStates = ops.scanLeft(CallModel.init.asRight[Any])((either, op) => either.flatMap(st => CallModel.fun(st, op)))
-    assert(actualStates.tail == errorOrStates)
+    val z: CallErrorOr[CallState] = Right(CallModel.init)
+    val actualStates = ops.scanLeft(z)((either, op) => either.flatMap(st => CallModel.fun(st, op)))
+    assert(actualStates.tail == callErrorOrStates)
   }
 }
