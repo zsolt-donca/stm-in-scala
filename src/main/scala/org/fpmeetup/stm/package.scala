@@ -27,19 +27,19 @@ package object stm {
   object CallModel {
     def init: CallState = InScript
 
-    def fun: (CallState, CallOp) => CallState = {
-      case (InScript, Enqueue(queueId)) => InQueue(queueId)
-      case (InQueue(_), Dequeue)        => InScript
+    def fun: (CallState, CallOp) => Either[Any, CallState] = {
+      case (InScript, Enqueue(queueId)) => Right(InQueue(queueId))
+      case (InQueue(_), Dequeue)        => Right(InScript)
 
-      case (InScript | InQueue(_), TargetAgent(agentId)) => Presenting(agentId)
+      case (InScript | InQueue(_), TargetAgent(agentId)) => Right(Presenting(agentId))
 
-      case (Presenting(agentId), Accept) => Processing(agentId)
-      case (Presenting(_), Reject)       => InScript
+      case (Presenting(agentId), Accept) => Right(Processing(agentId))
+      case (Presenting(_), Reject)       => Right(InScript)
 
-      case (Processing(agentId), CallEnded)         => PostProcessing(agentId)
-      case (PostProcessing(_), PostProcessingEnded) => Ended
+      case (Processing(agentId), CallEnded)         => Right(PostProcessing(agentId))
+      case (PostProcessing(_), PostProcessingEnded) => Right(Ended)
 
-      case (state, op) => sys.error(s"Invalid operation $op while in state $state")
+      case (state, op) => Left(InvalidCallModelTransition(state, op))
     }
 
     /*
@@ -48,4 +48,6 @@ package object stm {
     def fun: (CallState, CallOp) => CallState = {
      */
   }
+
+  case class InvalidCallModelTransition(state: CallState, op: CallOp)
 }

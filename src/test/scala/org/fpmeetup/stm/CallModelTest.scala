@@ -6,23 +6,20 @@ class CallModelTest extends WordSpec {
   "While In Script" when {
     "enqueuing" should {
       "result in being In Queue" in {
-        assert(CallModel.fun(InScript, Enqueue("q1")) == InQueue("q1"))
+        assert(CallModel.fun(InScript, Enqueue("q1")) == Right(InQueue("q1")))
       }
     }
 
     "targeting an agent" should {
       "result in beging Presenting for that agent" in {
-        assert(CallModel.fun(InScript, TargetAgent("a1")) == Presenting("a1"))
+        assert(CallModel.fun(InScript, TargetAgent("a1")) == Right(Presenting("a1")))
       }
     }
 
-    for (invalidOp <- Seq(Dequeue, Accept, Reject, CallEnded, PostProcessingEnded)) {
-      s"doing $invalidOp" should {
+    for (op <- Seq(Dequeue, Accept, Reject, CallEnded, PostProcessingEnded)) {
+      s"doing $op" should {
         "result in an error" in {
-          assertThrows[RuntimeException] {
-            CallModel.fun(InScript, invalidOp)
-          }
-          // what if I wanted to test where it's the right error message?
+          assert(CallModel.fun(InScript, op) == Left(InvalidCallModelTransition(InScript, op)))
         }
       }
     }
@@ -31,7 +28,7 @@ class CallModelTest extends WordSpec {
   "While In Queue" when {
     "dequeuing" should {
       "result in being In Script" in {
-        assert(CallModel.fun(InQueue("q1"), Dequeue) == InScript)
+        assert(CallModel.fun(InQueue("q1"), Dequeue) == Right(InScript))
       }
     }
   }
