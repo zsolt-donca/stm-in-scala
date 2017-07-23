@@ -39,10 +39,11 @@ object RandomNumbersApp extends App {
   val emailHosts = List("gmail.com", "yahoo.com", "outlook.com")
 
   def genFeedback: State[Rand, ConferenceFeedback] = {
-    def nextGrade = nextInt(5).map(i => i + 1)
+    val nextGrade = nextInt(5).map(i => i + 1)
     for {
       name <- nextElem(names)
-      email <- nextElem(emailHosts).map(emailHost => name.toLowerCase + "@" + emailHost)
+      emailHost <- nextElem(emailHosts)
+      email = name.toLowerCase + "@" + emailHost
       organization <- nextGrade
       content <- nextGrade
       pricing <- nextGrade
