@@ -22,17 +22,18 @@ object RandomNumbersApp extends App {
 
   def genFeedback(rnd: Random): ConferenceFeedback = {
     def nextElem[A](list: List[A]): A = list(rnd.nextInt(list.size))
+    val grade = rnd.nextInt(5) + 1
 
     val name = nextElem(names)
     val email = name.toLowerCase + "@" + nextElem(emailHosts)
-    val organization = rnd.nextInt(5) + 1
-    val content = rnd.nextInt(5) + 1
-    val pricing = rnd.nextInt(5) + 1
+    val organization = grade
+    val content = grade
+    val pricing = grade
     val comeNextYear = rnd.nextBoolean()
 
     ConferenceFeedback(name, email, organization, content, pricing, comeNextYear)
   }
 
   val rnd = new Random(42)
-  println(genFeedback(rnd)) // ConferenceFeedback(Alan,alan@gmail.com,4,5,1,true)
+  println(genFeedback(rnd)) // ConferenceFeedback(Dan,dan@gmail.com,1,1,1,false)
 }
