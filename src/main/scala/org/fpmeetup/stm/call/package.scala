@@ -1,5 +1,6 @@
 package org.fpmeetup.stm
 
+import org.fpmeetup.examples.MonadTransformers.ErrorAndThenState
 import org.fpmeetup.stm.error.{CallError, InvalidCallTransition}
 
 package object call {
@@ -24,11 +25,12 @@ package object call {
   case object PostProcessingEnded extends CallOp
 
   type CallErrorOr[T] = Either[CallError, T]
+  type CallSt[T] = ErrorAndThenState[CallState, CallError, T]
 
   object Call extends STM[CallState, CallOp, CallError] {
     def init: CallState = InScript
 
-    def fun: (CallState, CallOp) => CallErrorOr[CallState] = {
+    override def fun: (CallState, CallOp) => CallErrorOr[CallState] = {
       case (InScript, Enqueue(queueId)) => Right(InQueue(queueId))
       case (InQueue(_), Dequeue)        => Right(InScript)
 
