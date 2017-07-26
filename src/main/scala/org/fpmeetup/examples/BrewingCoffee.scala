@@ -37,10 +37,7 @@ object BrewingCoffee {
       case Right(coffeeBeans) =>
         grindBeans(coffeeBeans) match {
           case Right(groundCoffee) =>
-            useMokaPot(groundCoffee) match {
-              case Right(coffee) => Right(coffee)
-              case Left(reason)  => Left(reason)
-            }
+            useMokaPot(groundCoffee)
           case Left(reason) => Left(reason)
         }
       case Left(reason) => Left(reason)
